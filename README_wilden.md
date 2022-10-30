@@ -31,5 +31,12 @@
     - Install face-recognition
     - pip install face-recognition
 
+8. Install opencv-python
+    - pip install opencv-python
+
+9. Install streamlit_webrtc
+    - pip install streamlit_webrtc
+
+
 ## install package using requirements.txt
 - pip install -r requirements.txt
