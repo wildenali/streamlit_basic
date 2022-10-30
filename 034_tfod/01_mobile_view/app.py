@@ -2,17 +2,37 @@ import cv2
 import streamlit as st
 import numpy as np
 from streamlit_webrtc import VideoTransformerBase, webrtc_streamer
+from streamlit_webrtc import WebRtcMode, RTCConfiguration
+import av
 import base64
 from io import BytesIO
 from PIL import Image
 
+# Streaming camera using VideoTransformerBase
 class VideoTransformer(VideoTransformerBase):
     def __init__(self):
         self.i = 0
-
     def transform(self, frame):
         img = frame.to_ndarray(format="bgr24")
         return img
+
+# Streaming camera using frameWindow
+def frameWindow(cam, FRAME_WINDOW):
+    while True:
+        ret, frame = cam.read()
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        FRAME_WINDOW.image(frame)
+
+# Streaming camera using WebRtcMode, RTCConfiguration
+RTC_CONFIGURATION = RTCConfiguration(
+    {"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
+)
+class VideoProcessor:
+    def recv(self, frame):
+        img = frame.to_ndarray(format="bgr24")
+        return av.VideoFrame.from_ndarray(img, format="bgr24")
+
+
 
 def get_image_download_link(img,filename,text):
     buffered = BytesIO()
@@ -35,13 +55,21 @@ def face_detect(image,sf,mn):
 
 def run():
     st.title("Face Detection using OpenCV")
-    activities = ["Image", "Webcam"]
+    activities = ["Webcam", "Upload Image"]
     # st.set_option('deprecation.showfileUploaderEncoding', False)
     st.sidebar.markdown("# Choose Input Source")
     choice = st.sidebar.selectbox("Choose among the given options:", activities)
-    link = '[©Developed by Spidy20](http://github.com/spidy20)'
-    st.sidebar.markdown(link, unsafe_allow_html=True)
-    if choice == 'Image':
+    # link = '[©Developed by Spidy20](http://github.com/spidy20)'
+    # st.sidebar.markdown(link, unsafe_allow_html=True)
+    
+    hide_streamlit_style = """
+            <style>
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+            </style>
+            """
+    st.markdown(hide_streamlit_style, unsafe_allow_html=True) 
+    if choice == 'Upload Image':
         st.markdown(
             '''<h4 style='text-align: left; color: #d73b5c;'>* Face Detection is done using Haar Cascade & OpenCV"</h4>''',
             unsafe_allow_html=True)
@@ -65,8 +93,21 @@ def run():
                 result = Image.fromarray(orignal_image)
                 st.markdown(get_image_download_link(result, img_file.name, 'Download Image'), unsafe_allow_html=True)
     if choice == 'Webcam':
-        st.markdown(
-            '''<h4 style='text-align: left; color: #d73b5c;'>* It might be not work with Android Camera"</h4>''',
-            unsafe_allow_html=True)
-        webrtc_streamer(key="example", video_transformer_factory=VideoTransformer)
+        # No 1
+        # webrtc_streamer(key="example", video_transformer_factory=VideoTransformer)
+
+        # No 2
+        # FRAME_WINDOW = st.image([])
+        # cam = cv2.VideoCapture(0)
+        # frameWindow(cam, FRAME_WINDOW)
+
+        # No 3
+        webrtc_ctx = webrtc_streamer(
+            key="WYH",
+            mode=WebRtcMode.SENDRECV,
+            rtc_configuration=RTC_CONFIGURATION,
+            video_processor_factory=VideoProcessor,
+            media_stream_constraints={"video": True, "audio": False},
+            async_processing=False,
+        )
 run()
