@@ -1,0 +1,7 @@
+streamlit
+plotly
+yfinance
+matplotlib
+graphviz
+tensorflow
+face-recognition
